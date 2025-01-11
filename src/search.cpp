@@ -565,7 +565,7 @@ Value Search::Worker::search(
     Move  move, excludedMove, bestMove;
     Depth extension, newDepth;
     Value bestValue, value, eval, maxValue, probCutBeta;
-    bool  givesCheck, improving, priorCapture, opponentWorsening, onlyMoveExcluded;
+    bool  givesCheck, improving, priorCapture, opponentWorsening;
     bool  capture, ttCapture;
     Piece movedPiece;
 
@@ -573,14 +573,14 @@ Value Search::Worker::search(
     ValueList<Move, 32> quietsSearched;
 
     // Step 1. Initialize node
-    Worker* thisThread = this;
-    ss->inCheck        = pos.checkers();
-    priorCapture       = pos.captured_piece();
-    Color us           = pos.side_to_move();
-    ss->moveCount      = 0;
-    bestValue          = -VALUE_INFINITE;
-    maxValue           = VALUE_INFINITE;
-    onlyMoveExcluded   = false;
+    Worker* thisThread   = this;
+    ss->inCheck          = pos.checkers();
+    priorCapture         = pos.captured_piece();
+    Color us             = pos.side_to_move();
+    ss->moveCount        = 0;
+    bestValue            = -VALUE_INFINITE;
+    maxValue             = VALUE_INFINITE;
+    ss->onlyMoveExcluded = false;
 
     // Check for the available remaining time
     if (is_mainthread())
@@ -1088,6 +1088,7 @@ moves_loop:  // When in check, search starts here
 
                     extension = 1 + (value < singularBeta - doubleMargin)
                               + (value < singularBeta - tripleMargin);
+                    extension += ss->onlyMoveExcluded;
 
                     depth += ((!PvNode) && (depth < 14));
                 }
@@ -1374,7 +1375,7 @@ moves_loop:  // When in check, search starts here
     if (!moveCount)
     {
         bestValue = excludedMove ? alpha : ss->inCheck ? mated_in(ss->ply) : VALUE_DRAW;
-        if (excludedMove) onlyMoveExcluded = true;
+        if (excludedMove) ss->onlyMoveExcluded = true;
     }
 
     // If there is a move that produces search value greater than alpha,
@@ -1460,9 +1461,6 @@ moves_loop:  // When in check, search starts here
     }
 
     assert(bestValue > -VALUE_INFINITE && bestValue < VALUE_INFINITE);
-    
-    // If during singular search the only move got excluded, make sure to return a low score to trigger a deep extension
-    if (onlyMoveExcluded) return -VALUE_MATE;
 	
     return bestValue;
 }
