@@ -565,7 +565,7 @@ Value Search::Worker::search(
     Move  move, excludedMove, bestMove;
     Depth extension, newDepth;
     Value bestValue, value, eval, maxValue, probCutBeta;
-    bool  givesCheck, improving, priorCapture, opponentWorsening;
+    bool  givesCheck, improving, priorCapture, opponentWorsening, onlyMoveExcluded;
     bool  capture, ttCapture;
     Piece movedPiece;
 
@@ -580,6 +580,7 @@ Value Search::Worker::search(
     ss->moveCount      = 0;
     bestValue          = -VALUE_INFINITE;
     maxValue           = VALUE_INFINITE;
+    onlyMoveExcluded   = false;
 
     // Check for the available remaining time
     if (is_mainthread())
@@ -1371,7 +1372,10 @@ moves_loop:  // When in check, search starts here
         bestValue = (bestValue * depth + beta) / (depth + 1);
 
     if (!moveCount)
+    {
         bestValue = excludedMove ? alpha : ss->inCheck ? mated_in(ss->ply) : VALUE_DRAW;
+        if (excludedMove) onlyMoveExcluded = true;
+    }
 
     // If there is a move that produces search value greater than alpha,
     // we update the stats of searched moves.
@@ -1456,7 +1460,10 @@ moves_loop:  // When in check, search starts here
     }
 
     assert(bestValue > -VALUE_INFINITE && bestValue < VALUE_INFINITE);
-
+    
+    // If during singular search the only move got excluded, make sure to return a low score to trigger a deep extension
+    if (onlyMoveExcluded) return -VALUE_MATE;
+	
     return bestValue;
 }
 
