@@ -1441,7 +1441,7 @@ moves_loop:  // When in check, search starts here
         static const int nonPawnWeight = 154;
 
         int avgEval = (ss->staticEval + unadjustedStaticEval) / 2;
-        int mixedEval = (ss->staticEval * 8 + avgEval * depth) / (depth + 8);
+        int mixedEval = (ss->staticEval * 4 + avgEval * depth) / (depth + 4);
         auto bonus = std::clamp(int(bestValue - mixedEval) * depth / 8,
                                 -CORRECTION_HISTORY_LIMIT / 4, CORRECTION_HISTORY_LIMIT / 4);
         thisThread->pawnCorrectionHistory[us][pawn_structure_index<Correction>(pos)]
