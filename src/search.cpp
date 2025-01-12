@@ -1088,7 +1088,7 @@ moves_loop:  // When in check, search starts here
 
                     extension = 1 + (value < singularBeta - doubleMargin)
                               + (value < singularBeta - tripleMargin);
-                    extension += ss->onlyMoveExcluded;
+                    if (ss->onlyMoveExcluded) extension = std::min(extension, 2);
 
                     depth += ((!PvNode) && (depth < 14));
                 }
