@@ -1169,6 +1169,10 @@ moves_loop:  // When in check, search starts here
         else if (move == ttData.move)
             r -= 1960;
 
+        // Decrease reduction if the move gives a check
+        if (givesCheck)
+            r -= 384;
+
         if (capture)
             ss->statScore =
               7 * int(PieceValue[pos.captured_piece()])
